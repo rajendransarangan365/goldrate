@@ -1,0 +1,38 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" width="512" height="512">
+  <defs>
+    <linearGradient id="bgGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#070A10" />
+      <stop offset="100%" stop-color="#111827" />
+    </linearGradient>
+    <linearGradient id="goldRing" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#F5E6B3" />
+      <stop offset="30%" stop-color="#D4AF37" />
+      <stop offset="70%" stop-color="#AA8214" />
+      <stop offset="100%" stop-color="#FDE047" />
+    </linearGradient>
+    <radialGradient id="innerGlow" cx="50%" cy="50%" r="50%">
+      <stop offset="70%" stop-color="#161F36" />
+      <stop offset="100%" stop-color="#0B1120" />
+    </radialGradient>
+  </defs>
+
+  <!-- Background -->
+  <rect width="512" height="512" rx="112" fill="url(#bgGrad)" />
+
+  <!-- Outer Gold Ring -->
+  <circle cx="256" cy="256" r="190" fill="none" stroke="url(#goldRing)" stroke-width="14" stroke-dasharray="1194" />
+  
+  <!-- Subtle decorative inner dots ring -->
+  <circle cx="256" cy="256" r="165" fill="none" stroke="#D4AF37" stroke-width="2" stroke-opacity="0.4" stroke-dasharray="6 8" />
+
+  <!-- Inner Medallion -->
+  <circle cx="256" cy="256" r="150" fill="url(#innerGlow)" stroke="#233052" stroke-width="4" />
+
+  <!-- Center Monogram "A" with Pulse Wave -->
+  <!-- Stylized "A" -->
+  <path d="M 256 145 L 325 330 L 290 330 L 273 285 L 239 285 L 222 330 L 187 330 Z M 256 220 L 246 255 L 266 255 Z" fill="url(#goldRing)" />
+
+  <!-- Heartbeat / Market Pulse Line across bottom of A -->
+  <path d="M 170 365 L 220 365 L 235 345 L 250 385 L 265 350 L 275 372 L 290 365 L 342 365" fill="none" stroke="#F5E6B3" stroke-width="7" stroke-linecap="round" stroke-linejoin="round" />
+</svg>
+

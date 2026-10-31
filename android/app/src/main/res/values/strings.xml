@@ -1,0 +1,7 @@
+<?xml version='1.0' encoding='utf-8'?>
+<resources>
+    <string name="app_name">AURUM PULSE</string>
+    <string name="title_activity_main">AURUM PULSE</string>
+    <string name="package_name">com.aurumpulse.gold</string>
+    <string name="custom_url_scheme">com.aurumpulse.gold</string>
+</resources>

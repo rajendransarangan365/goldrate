@@ -1,0 +1,91 @@
+{
+  "active_model": "persistence_h1_20261031_020613",
+  "models": [
+    {
+      "model_version": "random_forest_h1_20261031_020614",
+      "model_type": "random_forest",
+      "horizon": 1,
+      "created_at": "2026-10-31T02:06:15.014286+00:00",
+      "dataset_version": "v1.0.0",
+      "train_samples": 4562,
+      "val_samples": 978,
+      "test_samples": 978,
+      "train_date_range": [
+        "2000-11-08",
+        "2019-01-23"
+      ],
+      "test_date_range": [
+        "2022-12-09",
+        "2026-10-29"
+      ],
+      "eval_metrics": {
+        "mae_pct": 1.9204529373154038,
+        "rmse_pct": 2.2496732158866664,
+        "directional_accuracy_pct": 45.0920245398773,
+        "mae_inr_10g": 1720.165190185989,
+        "up_precision": 0.0,
+        "up_recall": 0.0,
+        "down_precision": 42.944785276073624,
+        "down_recall": 100.0,
+        "test_samples": 978,
+        "train_duration_sec": 0.789
+      },
+      "interval_err_pct": 2.0210512507938194,
+      "feature_importance": {
+        "return_1d_pct": 0.1609,
+        "return_3d_pct": 0.1402,
+        "return_5d_pct": 0.0538,
+        "return_20d_pct": 0.1315,
+        "sma_7": 0.0084,
+        "sma_20": 0.0208,
+        "sma_50": 0.0119,
+        "ema_12": 0.0182,
+        "ema_26": 0.0474,
+        "macd": 0.0891,
+        "macd_signal": 0.0447,
+        "rsi_14": 0.0353,
+        "volatility_10d": 0.0402,
+        "volatility_20d": 0.1055,
+        "rolling_high_20d": 0.0184,
+        "rolling_low_20d": 0.0131,
+        "usd_inr_return_1d_pct": 0.0606
+      },
+      "artifact_path": "models/archived/random_forest_h1_20261031_020614.joblib",
+      "is_active": false
+    },
+    {
+      "model_version": "persistence_h1_20261031_020613",
+      "model_type": "persistence",
+      "horizon": 1,
+      "created_at": "2026-10-31T02:06:13.825566+00:00",
+      "dataset_version": "v1.0.0",
+      "train_samples": 4562,
+      "val_samples": 978,
+      "test_samples": 978,
+      "train_date_range": [
+        "2000-11-08",
+        "2019-01-23"
+      ],
+      "test_date_range": [
+        "2022-12-09",
+        "2026-10-29"
+      ],
+      "eval_metrics": {
+        "mae_pct": 0.8958878864674963,
+        "rmse_pct": 1.2704909908231792,
+        "directional_accuracy_pct": 0.5112474437627812,
+        "mae_inr_10g": 849.5390326459302,
+        "up_precision": 0.0,
+        "up_recall": 0.0,
+        "down_precision": 0.0,
+        "down_recall": 0.0,
+        "test_samples": 978,
+        "train_duration_sec": 0.0
+      },
+      "interval_err_pct": 1.3730152493346803,
+      "feature_importance": {},
+      "artifact_path": "models/archived/persistence_h1_20261031_020613.joblib",
+      "is_active": true
+    }
+  ]
+}
