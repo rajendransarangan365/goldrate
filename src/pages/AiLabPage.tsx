@@ -3,19 +3,11 @@ import {
   Cpu, 
   Database, 
   Play, 
-  CheckCircle, 
-  AlertTriangle, 
-  RotateCcw, 
-  Download, 
-  Upload, 
   FileSpreadsheet, 
-  Check, 
-  ShieldAlert, 
-  BarChart3, 
-  TrendingUp, 
   Sparkles,
   Info
 } from 'lucide-react';
+import { clientAiEngine, ModelRecord } from '../services/forecasting/clientAiEngine';
 
 export const AiLabPage: React.FC = () => {
   const [statusData, setStatusData] = useState<any>(null);
@@ -27,69 +19,47 @@ export const AiLabPage: React.FC = () => {
   const [trainingLog, setTrainingLog] = useState<string[]>([]);
   const [activeForecast, setActiveForecast] = useState<any>(null);
   const [explanation, setExplanation] = useState<any>(null);
-  const [isAiServiceRunning, setIsAiServiceRunning] = useState<boolean>(true);
 
   useEffect(() => {
-    fetchAiServiceData();
+    loadAiServiceData();
   }, [selectedHorizon]);
 
-  const fetchAiServiceData = async () => {
-    try {
-      const [resStatus, resSummary, resModels, resForecast, resExplain] = await Promise.all([
-        fetch('http://127.0.0.1:8000/api/status'),
-        fetch('http://127.0.0.1:8000/api/dataset/summary'),
-        fetch('http://127.0.0.1:8000/api/models'),
-        fetch(`http://127.0.0.1:8000/api/forecast?horizon=${selectedHorizon}`),
-        fetch(`http://127.0.0.1:8000/api/explanation?horizon=${selectedHorizon}`)
-      ]);
+  const loadAiServiceData = () => {
+    const status = clientAiEngine.getStatus();
+    const summary = clientAiEngine.getDatasetSummary();
+    const models = clientAiEngine.getModels();
+    const forecast = clientAiEngine.getForecast(selectedHorizon);
+    const explain = clientAiEngine.getExplanation(selectedHorizon);
 
-      if (resStatus.ok) {
-        setStatusData(await resStatus.json());
-        setIsAiServiceRunning(true);
-      }
-      if (resSummary.ok) setSummaryData(await resSummary.json());
-      if (resModels.ok) setModelsData(await resModels.json());
-      if (resForecast.ok) setActiveForecast(await resForecast.json());
-      if (resExplain.ok) setExplanation(await resExplain.json());
-    } catch (err) {
-      setIsAiServiceRunning(false);
-    }
+    setStatusData(status);
+    setSummaryData(summary);
+    setModelsData(models);
+    setActiveForecast(forecast);
+    setExplanation(explain);
   };
 
   const handleTrain = async () => {
     setIsTraining(true);
     setTrainingLog([
-      `[${new Date().toLocaleTimeString()}] Initiating local training run...`,
-      `[${new Date().toLocaleTimeString()}] Model: ${selectedModelType}, Horizon: ${selectedHorizon} trading days.`,
-      `[${new Date().toLocaleTimeString()}] Loading chronologically sorted historical dataset...`,
-      `[${new Date().toLocaleTimeString()}] Fitting scaler strictly on training split (70%)...`,
-      `[${new Date().toLocaleTimeString()}] Running walk-forward evaluation on test split (15%)...`
+      `[${new Date().toLocaleTimeString()}] Initiating client-side ML training run...`,
+      `[${new Date().toLocaleTimeString()}] Model Architecture: ${selectedModelType}, Target Horizon: ${selectedHorizon} trading day(s).`,
+      `[${new Date().toLocaleTimeString()}] Loading 6,568 chronologically sorted historical observations (2000–2026)...`,
+      `[${new Date().toLocaleTimeString()}] Computing 17 leakage-free technical features (RSI, MACD, returns, volatilities)...`,
+      `[${new Date().toLocaleTimeString()}] Executing walk-forward cross-validation on out-of-sample test split (15%)...`
     ]);
 
     try {
-      const res = await fetch('http://127.0.0.1:8000/api/models/train', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          model_type: selectedModelType,
-          horizon: selectedHorizon
-        })
-      });
+      const newModel: ModelRecord = await clientAiEngine.trainModel(selectedModelType, selectedHorizon);
 
-      if (!res.ok) {
-        const error = await res.json();
-        throw new Error(error.detail || 'Training failed');
-      }
-
-      const data = await res.json();
       setTrainingLog(prev => [
         ...prev,
-        `[${new Date().toLocaleTimeString()}] Model trained successfully in ${data.model_record.eval_metrics.train_duration_sec}s!`,
-        `[${new Date().toLocaleTimeString()}] Out-of-sample MAE: ${data.model_record.eval_metrics.mae_pct.toFixed(2)}% (INR ±${data.model_record.eval_metrics.mae_inr_10g.toFixed(2)})`,
-        `[${new Date().toLocaleTimeString()}] Directional accuracy: ${data.model_record.eval_metrics.directional_accuracy_pct.toFixed(1)}%`
+        `[${new Date().toLocaleTimeString()}] Model ${newModel.model_version} fitted in ${newModel.eval_metrics.train_duration_sec}s!`,
+        `[${new Date().toLocaleTimeString()}] Out-of-sample MAE: ${newModel.eval_metrics.mae_pct}% (INR ±${newModel.eval_metrics.mae_inr_10g}/10g)`,
+        `[${new Date().toLocaleTimeString()}] Directional accuracy: ${newModel.eval_metrics.directional_accuracy_pct}%`,
+        `[${new Date().toLocaleTimeString()}] Registered in local client storage and ready for activation.`
       ]);
 
-      await fetchAiServiceData();
+      loadAiServiceData();
     } catch (err: any) {
       setTrainingLog(prev => [...prev, `[ERROR] ${err.message}`]);
     } finally {
@@ -97,19 +67,9 @@ export const AiLabPage: React.FC = () => {
     }
   };
 
-  const handleActivate = async (modelVersion: string) => {
-    try {
-      const res = await fetch('http://127.0.0.1:8000/api/models/activate', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ model_version: modelVersion })
-      });
-      if (res.ok) {
-        await fetchAiServiceData();
-      }
-    } catch (err) {
-      console.error('Error activating model:', err);
-    }
+  const handleActivate = (modelVersion: string) => {
+    clientAiEngine.activateModel(modelVersion);
+    loadAiServiceData();
   };
 
   return (
@@ -119,36 +79,33 @@ export const AiLabPage: React.FC = () => {
         <div>
           <h1 className="text-xl font-bold text-white flex items-center gap-2">
             <Cpu className="w-5 h-5 text-purple-400" />
-            AI Lab — Local Machine Learning &amp; Training Engine
+            AI Lab — Autonomous Machine Learning &amp; Training Engine
           </h1>
           <p className="text-xs text-slate-400 mt-0.5">
-            Train, backtest, and register local predictive models on your PC without cloud AI APIs.
+            Train, backtest, and register predictive models directly in your browser or mobile app.
           </p>
         </div>
 
         <div className="flex items-center gap-2">
-          <span className={`inline-flex items-center gap-1.5 px-3 py-1 rounded-lg text-xs font-mono border ${
-            isAiServiceRunning
-              ? 'bg-purple-950/70 border-purple-500/50 text-purple-300'
-              : 'bg-rose-950/70 border-rose-500/50 text-rose-300'
-          }`}>
-            <span className={`w-2 h-2 rounded-full ${isAiServiceRunning ? 'bg-purple-400 animate-pulse' : 'bg-rose-500'}`} />
-            <span>Python Service: {isAiServiceRunning ? '127.0.0.1:8000 (Active)' : 'STOPPED'}</span>
+          <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-lg text-xs font-mono border bg-emerald-950/70 border-emerald-500/50 text-emerald-300">
+            <span className="w-2 h-2 rounded-full bg-emerald-400 animate-pulse" />
+            <span>ML Engine: Autonomous Client AI (Ready)</span>
           </span>
         </div>
       </div>
 
-      {!isAiServiceRunning && (
-        <div className="bg-rose-950/40 border border-rose-500/40 rounded-xl p-4 text-xs text-rose-200 space-y-2">
-          <p className="font-semibold text-rose-300">Local Python AI Backend Not Detected</p>
-          <p className="text-slate-300 leading-relaxed">
-            The browser PWA is currently operating in <strong>client-only mode</strong> (using the internal TypeScript statistical forecasting baseline). To enable local scikit-learn model training and versioning, start the local backend from your terminal:
+      {/* Autonomous In-Browser Feature Banner */}
+      <div className="bg-purple-950/30 border border-purple-500/30 rounded-xl p-3.5 text-xs text-purple-200 flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+        <div className="flex items-center gap-2.5">
+          <Sparkles className="w-4 h-4 text-aurum-gold flex-shrink-0" />
+          <p className="text-slate-300 leading-relaxed text-[11px]">
+            <strong>Autonomous In-Browser ML Engine:</strong> Quantitative modeling, chronological walk-forward evaluations, and feature attribution run 100% inside your browser or mobile app using 26 years of historical COMEX and USD/INR data. No local terminal commands, Python servers, or external AI APIs required.
           </p>
-          <pre className="p-2 rounded bg-aurum-dark border border-aurum-border text-[11px] font-mono text-emerald-300 overflow-x-auto">
-            .venv\Scripts\uvicorn backend.main:app --host 127.0.0.1 --port 8000
-          </pre>
         </div>
-      )}
+        <span className="text-[10px] font-mono text-emerald-400 px-2.5 py-1 rounded-lg bg-emerald-950/60 border border-emerald-500/40 whitespace-nowrap self-start sm:self-center">
+          100% Standalone &amp; Mobile Ready
+        </span>
+      </div>
 
       {/* SECTION A & B: Data Sources & Dataset Builder */}
       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -225,7 +182,7 @@ export const AiLabPage: React.FC = () => {
         <div className="lg:col-span-5 bg-aurum-card/70 border border-aurum-border rounded-xl p-5 space-y-4">
           <h2 className="text-xs font-semibold uppercase tracking-wider text-slate-300 border-b border-aurum-border/60 pb-2 flex items-center gap-1.5">
             <Play className="w-3.5 h-3.5 text-emerald-400" />
-            C. Train Model Locally
+            C. Train Model In-Browser
           </h2>
 
           <div className="space-y-3">
@@ -267,11 +224,11 @@ export const AiLabPage: React.FC = () => {
 
             <button
               onClick={handleTrain}
-              disabled={isTraining || !isAiServiceRunning}
-              className="w-full py-2.5 rounded-lg bg-purple-600 hover:bg-purple-500 disabled:opacity-50 text-white font-bold text-xs flex items-center justify-center gap-2 shadow-md transition-all"
+              disabled={isTraining}
+              className="w-full py-2.5 rounded-lg bg-purple-600 hover:bg-purple-500 disabled:opacity-50 text-white font-bold text-xs flex items-center justify-center gap-2 shadow-md transition-all cursor-pointer"
             >
               <Play className={`w-3.5 h-3.5 ${isTraining ? 'animate-spin' : ''}`} />
-              <span>{isTraining ? 'Fitting & Validating Model...' : 'Train Model on PC'}</span>
+              <span>{isTraining ? 'Fitting & Validating Model...' : 'Train Model In-Browser'}</span>
             </button>
           </div>
 
